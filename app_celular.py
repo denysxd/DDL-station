@@ -1,13 +1,13 @@
 import streamlit as st
 import yt_dlp
 import os
-import subprocess
 import shutil
+import glob
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="DDL Station", page_icon="🛸", layout="centered")
 
-# --- DISEÑO (CSS) ---
+# --- ESTILOS CSS ---
 st.markdown("""
     <style>
     .stApp {
@@ -94,171 +94,148 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Ready for Download</p>", unsafe_allow_html=True)
-st.markdown("<div class='warning-box'>⚠️ LÍMITE SUGERIDO: MÁXIMO 20 MINUTOS POR VIDEO</div>", unsafe_allow_html=True)
-
-# --- VERIFICACIÓN FFMPEG ---
-ffmpeg_existe = False
-try:
-    subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    ffmpeg_existe = True
-except:
-    if os.path.exists("ffmpeg.exe"): ffmpeg_existe = True
+st.markdown("<p class='subtitle'>YOUTUBE • TIKTOK • FACEBOOK</p>", unsafe_allow_html=True)
+st.markdown("<div class='warning-box'>⚠️ MODO ANTI-BLOQUEO ACTIVADO</div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK", "📘 FACEBOOK"])
 
+# --- FUNCIÓN DE DESCARGA MAESTRA ---
+def descargar_video(url, plataforma, calidad):
+    try:
+        # Nombre base temporal para evitar conflictos
+        temp_name = f"temp_{plataforma}"
+        
+        # OPCIONES ANTI-BLOQUEO
+        ydl_opts = {
+            'outtmpl': f'{temp_name}.%(ext)s', # Plantilla de nombre
+            'noplaylist': True,
+            'quiet': True,
+            'no_warnings': True,
+            # Falsificamos un navegador real
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'nocheckcertificate': True,
+        }
+
+        # Lógica de Formatos
+        if plataforma == "youtube":
+            if "720p" in calidad:
+                ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[ext=mp4]/best'
+            elif "1080p" in calidad:
+                ydl_opts['format'] = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+            elif "MP3" in calidad:
+                ydl_opts['format'] = 'bestaudio/best'
+                ydl_opts['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }]
+        
+        elif plataforma == "tiktok" or plataforma == "facebook":
+             if "Normal" in calidad:
+                 ydl_opts['format'] = 'best[ext=mp4]/best'
+             else:
+                 # Evitar HEVC para compatibilidad
+                 ydl_opts['format'] = 'best[vcodec!=hvc1][ext=mp4]/best[ext=mp4]/best'
+
+        # EJECUCIÓN
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            titulo = info.get('title', 'video_descargado')
+            clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
+            
+            # Buscamos el archivo que se descargó (yt-dlp a veces cambia la extensión)
+            archivos_encontrados = glob.glob(f"{temp_name}.*")
+            
+            if not archivos_encontrados:
+                return None, None, "No se encontró el archivo descargado."
+            
+            archivo_real = archivos_encontrados[0]
+            
+            # Definir extensión final y mime type
+            ext = os.path.splitext(archivo_real)[1]
+            if "MP3" in calidad:
+                mime = "audio/mpeg"
+                final_name = f"{clean_name}.mp3"
+            else:
+                mime = "video/mp4"
+                final_name = f"{clean_name}{ext}"
+            
+            return archivo_real, final_name, mime
+
+    except Exception as e:
+        return None, None, str(e)
+
 # ==========================================
-# YOUTUBE (MOTOR NUEVO: YT-DLP)
+# YOUTUBE
 # ==========================================
 with tab1:
-    yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...")
+    yt_link = st.text_input("ENLACE YOUTUBE:", placeholder="https://...")
     st.write(" ")
-    yt_tipo = st.radio("SELECCIONA CALIDAD (YT):", 
-                       ["⚡ Video Rápido (720p)", "💎 Video Ultra (1080p)", "🎧 Solo Audio (MP3)"])
+    yt_tipo = st.radio("CALIDAD YT:", ["⚡ Rápido (720p)", "💎 Ultra (1080p)", "🎧 MP3"])
     st.write(" ")
 
-    if st.button("INICIAR DESCARGA YT"):
+    if st.button("DESCARGAR YT"):
         if not yt_link:
-            st.warning("⚠️ ENLACE REQUERIDO")
+            st.warning("⚠️ Falta el enlace")
         else:
-            try:
-                with st.spinner('⏳ PROCESANDO YOUTUBE...'):
-                    # Nombres temporales
-                    nombre_archivo = "yt_download.mp4"
-                    mime_type = "video/mp4"
-                    
-                    # Opciones base de yt-dlp
-                    ydl_opts = {
-                        'outtmpl': nombre_archivo,
-                        'noplaylist': True,
-                        'quiet': True,
-                        'no_warnings': True,
-                    }
-
-                    # Configuración según selección
-                    if "720p" in yt_tipo:
-                        # Busca el mejor video mp4 que no pase de 720p
-                        ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[ext=mp4]'
-                    
-                    elif "1080p" in yt_tipo:
-                        # Busca 1080p y lo une con el mejor audio automáticamente
-                        ydl_opts['format'] = 'bestvideo[height=1080]+bestaudio/best[height=1080]/best'
-                        ydl_opts['merge_output_format'] = 'mp4'
-                    
-                    else: # MP3
-                        # Descarga solo audio y post-procesa a mp3 si es necesario
-                        nombre_archivo = "yt_audio.mp3"
-                        ydl_opts['outtmpl'] = "yt_audio" # yt-dlp añade la extensión sola
-                        ydl_opts['format'] = 'bestaudio/best'
-                        ydl_opts['postprocessors'] = [{
-                            'key': 'FFmpegExtractAudio',
-                            'preferredcodec': 'mp3',
-                            'preferredquality': '192',
-                        }]
-                        mime_type = "audio/mpeg"
-
-                    # EJECUCIÓN
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        info = ydl.extract_info(yt_link, download=True)
-                        titulo = info.get('title', 'video')
-                        # Limpieza de nombre
-                        clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
-                        
-                        # Ajuste final de nombre de archivo real
-                        if "MP3" in yt_tipo:
-                            real_filename = "yt_audio.mp3"
-                            final_display_name = f"{clean_name}.mp3"
-                        else:
-                            real_filename = nombre_archivo
-                            final_display_name = f"{clean_name}.mp4"
-
-                    # Lectura y Botón
-                    if os.path.exists(real_filename):
-                        with open(real_filename, "rb") as f:
-                            st.success("✅ COMPLETADO")
-                            st.download_button(f"💾 GUARDAR ARCHIVO", f, file_name=final_display_name, mime=mime_type)
-                        
-                        # Limpieza
-                        os.remove(real_filename)
-                    else:
-                        st.error("Error: El archivo no se generó correctamente.")
-
-            except Exception as e:
-                st.error(f"❌ ERROR: {e}")
+            with st.spinner('⏳ BURLANDO SEGURIDAD YOUTUBE...'):
+                path, name, mime = descargar_video(yt_link, "youtube", yt_tipo)
+                if path:
+                    with open(path, "rb") as f:
+                        st.success("✅ ¡CONSEGUIDO!")
+                        st.download_button("💾 GUARDAR", f, file_name=name, mime=mime)
+                    os.remove(path) # Limpieza
+                else:
+                    st.error(f"❌ Error: {mime}")
 
 # ==========================================
 # TIKTOK
 # ==========================================
 with tab2:
-    tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...")
+    tt_link = st.text_input("ENLACE TIKTOK:", placeholder="https://...")
     st.write(" ")
-    tt_calidad = st.radio("SELECCIONA CALIDAD (TT):", ["⚡ Descarga Normal", "💎 Alta Definición"])
+    tt_calidad = st.radio("CALIDAD TT:", ["⚡ Normal", "💎 Alta Definición"])
     st.write(" ")
     
-    if st.button("OBTENER TIKTOK"):
+    if st.button("DESCARGAR TT"):
         if not tt_link:
-            st.warning("⚠️ ENLACE REQUERIDO")
+            st.warning("⚠️ Falta el enlace")
         else:
-            try:
-                with st.spinner('🔄 PROCESANDO TIKTOK...'):
-                    nombre_tt = "tiktok_video.mp4"
-                    if "Normal" in tt_calidad:
-                        ydl_opts = {'outtmpl': nombre_tt, 'format': 'best[ext=mp4]', 'noplaylist': True}
-                    else:
-                        ydl_opts = {'outtmpl': nombre_tt, 'format': 'best[vcodec!=hvc1][ext=mp4]/best[ext=mp4]', 'noplaylist': True}
-
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        info = ydl.extract_info(tt_link, download=True)
-                        titulo = info.get('title', 'tiktok_video')
-                        clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
-                        final_name = f"{clean_name}.mp4"
-
-                    if os.path.exists(nombre_tt):
-                        shutil.move(nombre_tt, final_name)
-                        with open(final_name, "rb") as f:
-                            st.success(f"✅ TIKTOK LISTO")
-                            st.download_button("💾 GUARDAR VIDEO", f, file_name=final_name, mime="video/mp4")
-                        os.remove(final_name)
-            except Exception as e:
-                st.error(f"❌ ERROR: {e}")
+            with st.spinner('🔄 PROCESANDO...'):
+                path, name, mime = descargar_video(tt_link, "tiktok", tt_calidad)
+                if path:
+                    with open(path, "rb") as f:
+                        st.success("✅ LISTO")
+                        st.download_button("💾 GUARDAR", f, file_name=name, mime=mime)
+                    os.remove(path)
+                else:
+                    st.error(f"❌ Error: {mime}")
 
 # ==========================================
 # FACEBOOK
 # ==========================================
 with tab3:
-    fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...")
+    fb_link = st.text_input("ENLACE FACEBOOK:", placeholder="https://...")
     st.write(" ")
-    fb_calidad = st.radio("SELECCIONA CALIDAD (FB):", ["⚡ Descarga Normal", "💎 Alta Definición"])
+    fb_calidad = st.radio("CALIDAD FB:", ["⚡ Normal", "💎 Alta Definición"])
     st.write(" ")
     
-    if st.button("OBTENER FACEBOOK"):
+    if st.button("DESCARGAR FB"):
         if not fb_link:
-            st.warning("⚠️ ENLACE REQUERIDO")
+            st.warning("⚠️ Falta el enlace")
         else:
-            try:
-                with st.spinner('🔵 PROCESANDO FACEBOOK...'):
-                    nombre_fb = "fb_video.mp4"
-                    if "Normal" in fb_calidad:
-                        ydl_opts = {'outtmpl': nombre_fb, 'format': 'best[height<=720][ext=mp4]/best[ext=mp4]', 'noplaylist': True}
-                    else:
-                        ydl_opts = {'outtmpl': nombre_fb, 'format': 'best[vcodec!=hvc1][ext=mp4]/best[ext=mp4]', 'noplaylist': True}
-                    
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        info = ydl.extract_info(fb_link, download=True)
-                        titulo = info.get('title', 'facebook_video')
-                        clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
-                        final_name = f"{clean_name}.mp4"
+            with st.spinner('🔵 PROCESANDO...'):
+                path, name, mime = descargar_video(fb_link, "facebook", fb_calidad)
+                if path:
+                    with open(path, "rb") as f:
+                        st.success("✅ LISTO")
+                        st.download_button("💾 GUARDAR", f, file_name=name, mime=mime)
+                    os.remove(path)
+                else:
+                    st.error(f"❌ Error: {mime}")
 
-                    if os.path.exists(nombre_fb):
-                        shutil.move(nombre_fb, final_name)
-                        with open(final_name, "rb") as f:
-                            st.success(f"✅ FACEBOOK LISTO")
-                            st.download_button("💾 GUARDAR VIDEO FB", f, file_name=final_name, mime="video/mp4")
-                        os.remove(final_name)
-            except Exception as e:
-                st.error(f"❌ ERROR: {e}")
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 10px;'>v9.0 ANTI-BOT EDITION</p></center>", unsafe_allow_html=True)
 
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v8.0 | POWERED </p></center>", unsafe_allow_html=True)
 
 
 
