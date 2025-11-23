@@ -189,7 +189,8 @@ with tab2:
                 else:
                     st.error(f"❌ Error: {mime}")
 
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px;'>DDL STATION SOCIAL | BY SANDREKE</p></center>", unsafe_allow_html=True)
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px;'>DDL STATION SOCIAL</p></center>", unsafe_allow_html=True)
+
 
 
 
