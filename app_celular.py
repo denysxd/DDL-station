@@ -114,7 +114,7 @@ st.markdown("""
 
 # --- CABECERA ---
 st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'> Ready for DownloadK</p>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'> Ready for Download</p>", unsafe_allow_html=True)
 
 # --- ADVERTENCIA VISUAL ---
 st.markdown("""
@@ -262,3 +262,4 @@ with tab3:
 
 # Footer
 st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.1 | BY SANDREKE</p></center>", unsafe_allow_html=True)
+
