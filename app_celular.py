@@ -5,19 +5,25 @@ import os
 import subprocess
 import shutil
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="DDL Station", page_icon="🛸", layout="centered")
 
-# --- DISEÑO (CSS) ---
+# --- GESTIÓN DE ESTADO (LIMPIAR LINKS) ---
+if 'yt_url' not in st.session_state: st.session_state.yt_url = ''
+if 'tt_url' not in st.session_state: st.session_state.tt_url = ''
+if 'fb_url' not in st.session_state: st.session_state.fb_url = ''
+
+def clear_yt(): st.session_state.yt_url = ''
+def clear_tt(): st.session_state.tt_url = ''
+def clear_fb(): st.session_state.fb_url = ''
+
+# --- ESTILOS CSS ---
 st.markdown("""
     <style>
-    /* 1. FONDO AZUL PETRÓLEO */
     .stApp {
         background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
         color: white;
     }
-
-    /* 2. TÍTULO PRINCIPAL */
     h1 {
         color: #ffffff;
         text-align: center;
@@ -25,16 +31,12 @@ st.markdown("""
         text-shadow: 0 0 10px #00d2ff; 
         margin-bottom: 5px;
     }
-    
-    /* Subtítulo */
     .subtitle {
         text-align: center;
         color: #b0c4de;
         font-size: 14px;
         margin-bottom: 20px;
     }
-
-    /* 3. CAJA DE ADVERTENCIA */
     .warning-box {
         background-color: rgba(255, 165, 0, 0.1);
         border: 1px solid #ffa500;
@@ -47,8 +49,6 @@ st.markdown("""
         margin-bottom: 25px;
         letter-spacing: 1px;
     }
-
-    /* 4. INPUTS */
     .stTextInput > label {
         color: white !important;
         font-size: 16px !important;
@@ -59,8 +59,6 @@ st.markdown("""
         background-color: rgba(0, 0, 0, 0.3);
         border: 1px solid #00d2ff;
     }
-
-    /* 5. BOTONES */
     .stButton>button {
         width: 100%;
         background: rgba(0, 0, 0, 0.5);
@@ -78,8 +76,18 @@ st.markdown("""
         color: #0f2027;
         box-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
     }
-
-    /* 6. RADIO BUTTONS */
+    div[data-testid="column"] button {
+        background: transparent;
+        border: 1px solid #ff4444;
+        color: #ff4444;
+        height: 42px;
+        margin-top: 28px;
+    }
+    div[data-testid="column"] button:hover {
+        background: #ff4444;
+        color: white;
+        box-shadow: none;
+    }
     div[role="radiogroup"] p {
         color: #00ffff !important;
         font-size: 18px !important;
@@ -96,8 +104,6 @@ st.markdown("""
         font-weight: bold;
         margin-bottom: 10px;
     }
-
-    /* 7. PESTAÑAS */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: rgba(0,0,0,0.3);
@@ -115,15 +121,9 @@ st.markdown("""
 # --- CABECERA ---
 st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>YOUTUBE • TIKTOK • FACEBOOK</p>", unsafe_allow_html=True)
+st.markdown("<div class='warning-box'>⚠️ LÍMITE SUGERIDO: MÁXIMO 20 MINUTOS POR VIDEO</div>", unsafe_allow_html=True)
 
-# --- ADVERTENCIA ---
-st.markdown("""
-    <div class='warning-box'>
-        ⚠️ LÍMITE SUGERIDO: MÁXIMO 20 MINUTOS POR VIDEO
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- FFMPEG ---
+# --- FFMPEG CHECK ---
 ffmpeg_existe = False
 try:
     subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -135,10 +135,15 @@ except:
 tab1, tab2, tab3 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK", "📘 FACEBOOK"])
 
 # ==========================================
-# PESTAÑA 1: YOUTUBE
+# YOUTUBE
 # ==========================================
 with tab1:
-    yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...")
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...", key="yt_url")
+    with col2:
+        st.button("🗑️", on_click=clear_yt, help="Limpiar enlace")
+
     st.write(" ")
     yt_tipo = st.radio("SELECCIONA CALIDAD (YT):", 
                        ["⚡ Video Rápido (720p)", "💎 Video Ultra (1080p)", "🎧 Solo Audio (MP3)"])
@@ -200,15 +205,17 @@ with tab1:
                 st.error(f"❌ ERROR: {e}")
 
 # ==========================================
-# PESTAÑA 2: TIKTOK (CON SELECTOR)
+# TIKTOK
 # ==========================================
 with tab2:
-    tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...")
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...", key="tt_url")
+    with col2:
+        st.button("🗑️", on_click=clear_tt, help="Limpiar enlace", key="btn_clear_tt")
+
     st.write(" ")
-    
-    # NUEVO SELECTOR TIKTOK
     tt_calidad = st.radio("SELECCIONA CALIDAD (TT):", ["⚡ Descarga Normal", "💎 Alta Definición"])
-    
     st.write(" ")
     
     if st.button("OBTENER TIKTOK"):
@@ -218,23 +225,10 @@ with tab2:
             try:
                 with st.spinner('🔄 PROCESANDO TIKTOK...'):
                     nombre_tt = "tiktok_video.mp4"
-                    
-                    # Lógica de calidad
                     if "Normal" in tt_calidad:
-                        # Descarga archivo único (standard) - Más compatible
-                        ydl_opts = {
-                            'outtmpl': nombre_tt, 
-                            'format': 'best[ext=mp4]', 
-                            'noplaylist': True
-                        }
+                        ydl_opts = {'outtmpl': nombre_tt, 'format': 'best[ext=mp4]', 'noplaylist': True}
                     else:
-                        # Descarga HD (puede unir video+audio)
-                        ydl_opts = {
-                            'outtmpl': nombre_tt, 
-                            'format': 'bestvideo+bestaudio/best', 
-                            'merge_output_format': 'mp4',
-                            'noplaylist': True
-                        }
+                        ydl_opts = {'outtmpl': nombre_tt, 'format': 'best[vcodec!=hvc1][ext=mp4]/best[ext=mp4]', 'noplaylist': True}
 
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(tt_link, download=True)
@@ -252,15 +246,17 @@ with tab2:
                 st.error(f"❌ ERROR: {e}")
 
 # ==========================================
-# PESTAÑA 3: FACEBOOK (CON SELECTOR)
+# FACEBOOK
 # ==========================================
 with tab3:
-    fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...")
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...", key="fb_url")
+    with col2:
+        st.button("🗑️", on_click=clear_fb, help="Limpiar enlace", key="btn_clear_fb")
+
     st.write(" ")
-    
-    # NUEVO SELECTOR FACEBOOK
     fb_calidad = st.radio("SELECCIONA CALIDAD (FB):", ["⚡ Descarga Normal", "💎 Alta Definición"])
-    
     st.write(" ")
     
     if st.button("OBTENER FACEBOOK"):
@@ -270,23 +266,10 @@ with tab3:
             try:
                 with st.spinner('🔵 PROCESANDO FACEBOOK...'):
                     nombre_fb = "fb_video.mp4"
-                    
-                    # Lógica de calidad
                     if "Normal" in fb_calidad:
-                        # Calidad estándar (SD)
-                        ydl_opts = {
-                            'outtmpl': nombre_fb, 
-                            'format': 'best[height<=720][ext=mp4]/best[ext=mp4]', 
-                            'noplaylist': True
-                        }
+                        ydl_opts = {'outtmpl': nombre_fb, 'format': 'best[height<=720][ext=mp4]/best[ext=mp4]', 'noplaylist': True}
                     else:
-                        # Calidad Máxima (HD/1080p si existe)
-                        ydl_opts = {
-                            'outtmpl': nombre_fb, 
-                            'format': 'bestvideo+bestaudio/best', 
-                            'merge_output_format': 'mp4',
-                            'noplaylist': True
-                        }
+                        ydl_opts = {'outtmpl': nombre_fb, 'format': 'best[vcodec!=hvc1][ext=mp4]/best[ext=mp4]', 'noplaylist': True}
                     
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(fb_link, download=True)
@@ -301,7 +284,7 @@ with tab3:
                         st.success(f"✅ FACEBOOK ({fb_calidad}) LISTO")
                         st.download_button("💾 GUARDAR VIDEO FB", f, file_name=final_name, mime="video/mp4")
             except Exception as e:
-                st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
+                st.error(f"❌ ERROR: {e}")
 
-# Footer
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.4 | BY SANDREKE</p></center>", unsafe_allow_html=True)
+# --- FOOTER ---
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.5 | BY SANDREKE</p></center>", unsafe_allow_html=True)
