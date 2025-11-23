@@ -17,13 +17,16 @@ def clear_yt(): st.session_state.yt_url = ''
 def clear_tt(): st.session_state.tt_url = ''
 def clear_fb(): st.session_state.fb_url = ''
 
-# --- ESTILOS CSS ---
+# --- ESTILOS CSS (MEJORADO) ---
 st.markdown("""
     <style>
+    /* 1. FONDO GENERAL */
     .stApp {
         background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
         color: white;
     }
+    
+    /* 2. TÍTULO */
     h1 {
         color: #ffffff;
         text-align: center;
@@ -37,6 +40,8 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 20px;
     }
+    
+    /* 3. ADVERTENCIA */
     .warning-box {
         background-color: rgba(255, 165, 0, 0.1);
         border: 1px solid #ffa500;
@@ -49,17 +54,24 @@ st.markdown("""
         margin-bottom: 25px;
         letter-spacing: 1px;
     }
+
+    /* 4. INPUTS (Cajas de texto) */
     .stTextInput > label {
         color: white !important;
-        font-size: 16px !important;
+        font-size: 14px !important;
         font-weight: bold;
+        margin-bottom: 5px;
     }
     .stTextInput input {
         color: white !important;
-        background-color: rgba(0, 0, 0, 0.3);
+        background-color: rgba(0, 0, 0, 0.4); /* Un poco más oscuro */
         border: 1px solid #00d2ff;
+        border-radius: 8px;
+        height: 45px; /* Altura fija para alinear */
     }
-    .stButton>button {
+
+    /* 5. BOTONES PRINCIPALES (Descargar) */
+    .stButton > button {
         width: 100%;
         background: rgba(0, 0, 0, 0.5);
         color: #00d2ff;
@@ -71,43 +83,52 @@ st.markdown("""
         box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
         transition: all 0.3s ease;
     }
-    .stButton>button:hover {
+    .stButton > button:hover {
         background: #00d2ff;
         color: #0f2027;
         box-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
     }
-    div[data-testid="column"] button {
-        background: transparent;
-        border: 1px solid #ff4444;
-        color: #ff4444;
-        height: 42px;
-        margin-top: 28px;
+
+    /* 6. CORRECCIÓN DEL BOTÓN BORRAR (TRASH) 🗑️ */
+    /* Apuntamos específicamente a los botones de la columna pequeña */
+    [data-testid="column"] button {
+        background-color: transparent !important; /* Quita el fondo blanco */
+        border: 1px solid #ff4444 !important;     /* Borde rojo fino */
+        color: #ff4444 !important;                /* Icono rojo */
+        border-radius: 8px;
+        height: 45px;                             /* Misma altura que el input */
+        margin-top: 29px;                         /* Truco para bajarlo y alinearlo */
+        transition: all 0.3s ease;
     }
-    div[data-testid="column"] button:hover {
-        background: #ff4444;
-        color: white;
-        box-shadow: none;
+    [data-testid="column"] button:hover {
+        background-color: #ff4444 !important;
+        color: white !important;
+        box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
     }
+
+    /* 7. RADIO BUTTONS */
     div[role="radiogroup"] p {
         color: #00ffff !important;
-        font-size: 18px !important;
+        font-size: 16px !important;
         font-weight: bold !important;
         text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
         background-color: rgba(0, 0, 0, 0.3);
-        padding: 5px 10px;
+        padding: 8px 10px;
         border-radius: 5px;
         border-left: 3px solid #00ffff;
     }
     .stRadio > label {
         color: white !important;
-        font-size: 18px !important;
+        font-size: 16px !important;
         font-weight: bold;
         margin-bottom: 10px;
     }
+    
+    /* 8. PESTAÑAS */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 8px;
         background-color: rgba(0,0,0,0.3);
-        padding: 10px;
+        padding: 8px;
         border-radius: 10px;
     }
     .stTabs [aria-selected="true"] {
@@ -138,11 +159,13 @@ tab1, tab2, tab3 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK", "📘 FACEBOOK"])
 # YOUTUBE
 # ==========================================
 with tab1:
-    col1, col2 = st.columns([5, 1])
+    # Ajustamos columnas: 7 partes para texto, 1 parte para botón (más pegados)
+    col1, col2 = st.columns([7, 1])
     with col1:
         yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...", key="yt_url")
     with col2:
-        st.button("🗑️", on_click=clear_yt, help="Limpiar enlace")
+        # El CSS ahora se encarga de alinear este botón
+        st.button("🗑️", on_click=clear_yt, help="Borrar enlace")
 
     st.write(" ")
     yt_tipo = st.radio("SELECCIONA CALIDAD (YT):", 
@@ -208,11 +231,11 @@ with tab1:
 # TIKTOK
 # ==========================================
 with tab2:
-    col1, col2 = st.columns([5, 1])
+    col1, col2 = st.columns([7, 1])
     with col1:
         tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...", key="tt_url")
     with col2:
-        st.button("🗑️", on_click=clear_tt, help="Limpiar enlace", key="btn_clear_tt")
+        st.button("🗑️", on_click=clear_tt, help="Borrar enlace", key="btn_clear_tt")
 
     st.write(" ")
     tt_calidad = st.radio("SELECCIONA CALIDAD (TT):", ["⚡ Descarga Normal", "💎 Alta Definición"])
@@ -249,11 +272,11 @@ with tab2:
 # FACEBOOK
 # ==========================================
 with tab3:
-    col1, col2 = st.columns([5, 1])
+    col1, col2 = st.columns([7, 1])
     with col1:
         fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...", key="fb_url")
     with col2:
-        st.button("🗑️", on_click=clear_fb, help="Limpiar enlace", key="btn_clear_fb")
+        st.button("🗑️", on_click=clear_fb, help="Borrar enlace", key="btn_clear_fb")
 
     st.write(" ")
     fb_calidad = st.radio("SELECCIONA CALIDAD (FB):", ["⚡ Descarga Normal", "💎 Alta Definición"])
@@ -284,7 +307,7 @@ with tab3:
                         st.success(f"✅ FACEBOOK ({fb_calidad}) LISTO")
                         st.download_button("💾 GUARDAR VIDEO FB", f, file_name=final_name, mime="video/mp4")
             except Exception as e:
-                st.error(f"❌ ERROR: {e}")
+                st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
 
 # --- FOOTER ---
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.5 | BY SANDREKE</p></center>", unsafe_allow_html=True)
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.6 | BY SANDREKE</p></center>", unsafe_allow_html=True)
