@@ -1,12 +1,13 @@
 import streamlit as st
-from pytubefix import YouTube
 import yt_dlp
 import os
 import subprocess
 import shutil
 
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="DDL Station", page_icon="🛸", layout="centered")
 
+# --- DISEÑO (CSS) ---
 st.markdown("""
     <style>
     .stApp {
@@ -96,6 +97,7 @@ st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>Ready for Download</p>", unsafe_allow_html=True)
 st.markdown("<div class='warning-box'>⚠️ LÍMITE SUGERIDO: MÁXIMO 20 MINUTOS POR VIDEO</div>", unsafe_allow_html=True)
 
+# --- VERIFICACIÓN FFMPEG ---
 ffmpeg_existe = False
 try:
     subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -105,13 +107,8 @@ except:
 
 tab1, tab2, tab3 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK", "📘 FACEBOOK"])
 
-def unir_ffmpeg(v, a, out):
-    cmd_base = "ffmpeg" if not os.path.exists("ffmpeg.exe") else "ffmpeg.exe"
-    cmd = f'{cmd_base} -i "{v}" -i "{a}" -c:v copy -c:a aac "{out}" -y'
-    subprocess.run(cmd, shell=True)
-
 # ==========================================
-# YOUTUBE
+# YOUTUBE (MOTOR NUEVO: YT-DLP)
 # ==========================================
 with tab1:
     yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...")
@@ -126,45 +123,66 @@ with tab1:
         else:
             try:
                 with st.spinner('⏳ PROCESANDO YOUTUBE...'):
-                    yt = YouTube(yt_link)
-                    if yt.length > 1800: st.warning("⚠️ Video muy largo. Podría fallar.")
-                    nombre_base = "".join(c for c in yt.title if c.isalnum() or c in (' ', '-', '_')).strip()
-                    final_path = ""
-                    mime_type = ""
+                    # Nombres temporales
+                    nombre_archivo = "yt_download.mp4"
+                    mime_type = "video/mp4"
                     
+                    # Opciones base de yt-dlp
+                    ydl_opts = {
+                        'outtmpl': nombre_archivo,
+                        'noplaylist': True,
+                        'quiet': True,
+                        'no_warnings': True,
+                    }
+
+                    # Configuración según selección
                     if "720p" in yt_tipo:
-                        stream = yt.streams.get_highest_resolution()
-                        final_path = f"{nombre_base}_720p.mp4"
-                        stream.download(filename=final_path)
-                        mime_type = "video/mp4"
+                        # Busca el mejor video mp4 que no pase de 720p
+                        ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[ext=mp4]'
+                    
                     elif "1080p" in yt_tipo:
-                        vid = yt.streams.filter(res="1080p", file_extension='mp4').first()
-                        aud = yt.streams.get_audio_only()
-                        if vid:
-                            vid.download(filename="temp_v.mp4")
-                            aud.download(filename="temp_a.m4a")
-                            final_path = f"{nombre_base}_1080p.mp4"
-                            unir_ffmpeg("temp_v.mp4", "temp_a.m4a", final_path)
-                            if os.path.exists("temp_v.mp4"): os.remove("temp_v.mp4")
-                            if os.path.exists("temp_a.m4a"): os.remove("temp_a.m4a")
-                            mime_type = "video/mp4"
-                        else:
-                            st.warning("⚠️ 1080p NO DISPONIBLE. BAJANDO 720p.")
-                            stream = yt.streams.get_highest_resolution()
-                            final_path = f"{nombre_base}_720p.mp4"
-                            stream.download(filename=final_path)
-                            mime_type = "video/mp4"
-                    else: 
-                        aud = yt.streams.get_audio_only()
-                        aud.download(filename="temp_aud.m4a")
-                        final_path = f"{nombre_base}.mp3"
-                        if os.path.exists(final_path): os.remove(final_path)
-                        os.rename("temp_aud.m4a", final_path)
+                        # Busca 1080p y lo une con el mejor audio automáticamente
+                        ydl_opts['format'] = 'bestvideo[height=1080]+bestaudio/best[height=1080]/best'
+                        ydl_opts['merge_output_format'] = 'mp4'
+                    
+                    else: # MP3
+                        # Descarga solo audio y post-procesa a mp3 si es necesario
+                        nombre_archivo = "yt_audio.mp3"
+                        ydl_opts['outtmpl'] = "yt_audio" # yt-dlp añade la extensión sola
+                        ydl_opts['format'] = 'bestaudio/best'
+                        ydl_opts['postprocessors'] = [{
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '192',
+                        }]
                         mime_type = "audio/mpeg"
 
-                    with open(final_path, "rb") as f:
-                        st.success("✅ COMPLETADO")
-                        st.download_button(f"💾 GUARDAR ARCHIVO", f, file_name=final_path, mime=mime_type)
+                    # EJECUCIÓN
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(yt_link, download=True)
+                        titulo = info.get('title', 'video')
+                        # Limpieza de nombre
+                        clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
+                        
+                        # Ajuste final de nombre de archivo real
+                        if "MP3" in yt_tipo:
+                            real_filename = "yt_audio.mp3"
+                            final_display_name = f"{clean_name}.mp3"
+                        else:
+                            real_filename = nombre_archivo
+                            final_display_name = f"{clean_name}.mp4"
+
+                    # Lectura y Botón
+                    if os.path.exists(real_filename):
+                        with open(real_filename, "rb") as f:
+                            st.success("✅ COMPLETADO")
+                            st.download_button(f"💾 GUARDAR ARCHIVO", f, file_name=final_display_name, mime=mime_type)
+                        
+                        # Limpieza
+                        os.remove(real_filename)
+                    else:
+                        st.error("Error: El archivo no se generó correctamente.")
+
             except Exception as e:
                 st.error(f"❌ ERROR: {e}")
 
@@ -191,16 +209,16 @@ with tab2:
 
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(tt_link, download=True)
-                        titulo_real = info.get('title', 'tiktok_video')
-                        titulo_limpio = "".join(c for c in titulo_real if c.isalnum() or c in (' ', '-', '_')).strip()
-                        final_name = f"{titulo_limpio}.mp4"
+                        titulo = info.get('title', 'tiktok_video')
+                        clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
+                        final_name = f"{clean_name}.mp4"
 
-                    if os.path.exists(final_name): os.remove(final_name)
-                    shutil.move(nombre_tt, final_name)
-
-                    with open(final_name, "rb") as f:
-                        st.success(f"✅ TIKTOK ({tt_calidad}) LISTO")
-                        st.download_button("💾 GUARDAR VIDEO", f, file_name=final_name, mime="video/mp4")
+                    if os.path.exists(nombre_tt):
+                        shutil.move(nombre_tt, final_name)
+                        with open(final_name, "rb") as f:
+                            st.success(f"✅ TIKTOK LISTO")
+                            st.download_button("💾 GUARDAR VIDEO", f, file_name=final_name, mime="video/mp4")
+                        os.remove(final_name)
             except Exception as e:
                 st.error(f"❌ ERROR: {e}")
 
@@ -227,20 +245,21 @@ with tab3:
                     
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(fb_link, download=True)
-                        titulo_real = info.get('title', 'facebook_video')
-                        titulo_limpio = "".join(c for c in titulo_real if c.isalnum() or c in (' ', '-', '_')).strip()
-                        final_name = f"{titulo_limpio}.mp4"
+                        titulo = info.get('title', 'facebook_video')
+                        clean_name = "".join(c for c in titulo if c.isalnum() or c in (' ', '-', '_')).strip()
+                        final_name = f"{clean_name}.mp4"
 
-                    if os.path.exists(final_name): os.remove(final_name)
-                    shutil.move(nombre_fb, final_name)
-
-                    with open(final_name, "rb") as f:
-                        st.success(f"✅ FACEBOOK ({fb_calidad}) LISTO")
-                        st.download_button("💾 GUARDAR VIDEO FB", f, file_name=final_name, mime="video/mp4")
+                    if os.path.exists(nombre_fb):
+                        shutil.move(nombre_fb, final_name)
+                        with open(final_name, "rb") as f:
+                            st.success(f"✅ FACEBOOK LISTO")
+                            st.download_button("💾 GUARDAR VIDEO FB", f, file_name=final_name, mime="video/mp4")
+                        os.remove(final_name)
             except Exception as e:
-                st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
+                st.error(f"❌ ERROR: {e}")
 
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v7.0 </p></center>", unsafe_allow_html=True)
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v8.0 | POWERED </p></center>", unsafe_allow_html=True)
+
 
 
 
