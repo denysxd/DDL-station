@@ -34,9 +34,9 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* 3. CAJA DE ADVERTENCIA (NUEVA) */
+    /* 3. CAJA DE ADVERTENCIA */
     .warning-box {
-        background-color: rgba(255, 165, 0, 0.1); /* Naranja transparente */
+        background-color: rgba(255, 165, 0, 0.1);
         border: 1px solid #ffa500;
         color: #ffa500;
         padding: 10px;
@@ -114,16 +114,16 @@ st.markdown("""
 
 # --- CABECERA ---
 st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'> Ready for Download</p>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>YOUTUBE • TIKTOK • FACEBOOK</p>", unsafe_allow_html=True)
 
-# --- ADVERTENCIA VISUAL ---
+# --- ADVERTENCIA ---
 st.markdown("""
     <div class='warning-box'>
-        ⚠️ LÍMITE : MÁXIMO 20 MINUTOS POR VIDEO
+        ⚠️ LÍMITE SUGERIDO: MÁXIMO 20 MINUTOS POR VIDEO
     </div>
     """, unsafe_allow_html=True)
 
-# --- VERIFICACIÓN FFMPEG ---
+# --- FFMPEG ---
 ffmpeg_existe = False
 try:
     subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -140,7 +140,7 @@ tab1, tab2, tab3 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK", "📘 FACEBOOK"])
 with tab1:
     yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...")
     st.write(" ")
-    yt_tipo = st.radio("SELECCIONA CALIDAD:", 
+    yt_tipo = st.radio("SELECCIONA CALIDAD (YT):", 
                        ["⚡ Video Rápido (720p)", "💎 Video Ultra (1080p)", "🎧 Solo Audio (MP3)"])
     st.write(" ")
 
@@ -156,10 +156,8 @@ with tab1:
             try:
                 with st.spinner('⏳ PROCESANDO YOUTUBE...'):
                     yt = YouTube(yt_link)
-                    
-                    # Verificación rápida de duración (aprox)
-                    if yt.length > 1800: # 1800 segundos = 30 min
-                        st.warning("⚠️ El video es muy largo (>30min). Podría fallar en este servidor.")
+                    if yt.length > 1800:
+                         st.warning("⚠️ Video muy largo (>30min). Podría fallar.")
                     
                     nombre_base = "".join(c for c in yt.title if c.isalnum() or c in (' ', '-', '_')).strip()
                     final_path = ""
@@ -202,11 +200,17 @@ with tab1:
                 st.error(f"❌ ERROR: {e}")
 
 # ==========================================
-# PESTAÑA 2: TIKTOK
+# PESTAÑA 2: TIKTOK (CON SELECTOR)
 # ==========================================
 with tab2:
     tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...")
     st.write(" ")
+    
+    # NUEVO SELECTOR TIKTOK
+    tt_calidad = st.radio("SELECCIONA CALIDAD (TT):", ["⚡ Descarga Normal", "💎 Alta Definición"])
+    
+    st.write(" ")
+    
     if st.button("OBTENER TIKTOK"):
         if not tt_link:
             st.warning("⚠️ ENLACE REQUERIDO")
@@ -214,7 +218,24 @@ with tab2:
             try:
                 with st.spinner('🔄 PROCESANDO TIKTOK...'):
                     nombre_tt = "tiktok_video.mp4"
-                    ydl_opts = {'outtmpl': nombre_tt, 'format': 'best[ext=mp4]', 'noplaylist': True}
+                    
+                    # Lógica de calidad
+                    if "Normal" in tt_calidad:
+                        # Descarga archivo único (standard) - Más compatible
+                        ydl_opts = {
+                            'outtmpl': nombre_tt, 
+                            'format': 'best[ext=mp4]', 
+                            'noplaylist': True
+                        }
+                    else:
+                        # Descarga HD (puede unir video+audio)
+                        ydl_opts = {
+                            'outtmpl': nombre_tt, 
+                            'format': 'bestvideo+bestaudio/best', 
+                            'merge_output_format': 'mp4',
+                            'noplaylist': True
+                        }
+
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(tt_link, download=True)
                         titulo_real = info.get('title', 'tiktok_video')
@@ -225,25 +246,47 @@ with tab2:
                     shutil.move(nombre_tt, final_name)
 
                     with open(final_name, "rb") as f:
-                        st.success("✅ TIKTOK LISTO")
+                        st.success(f"✅ TIKTOK ({tt_calidad}) LISTO")
                         st.download_button("💾 GUARDAR VIDEO", f, file_name=final_name, mime="video/mp4")
             except Exception as e:
                 st.error(f"❌ ERROR: {e}")
 
 # ==========================================
-# PESTAÑA 3: FACEBOOK
+# PESTAÑA 3: FACEBOOK (CON SELECTOR)
 # ==========================================
 with tab3:
     fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...")
     st.write(" ")
+    
+    # NUEVO SELECTOR FACEBOOK
+    fb_calidad = st.radio("SELECCIONA CALIDAD (FB):", ["⚡ Descarga Normal", "💎 Alta Definición"])
+    
+    st.write(" ")
+    
     if st.button("OBTENER FACEBOOK"):
         if not fb_link:
             st.warning("⚠️ ENLACE REQUERIDO")
         else:
             try:
-                with st.spinner('🔵 BUSCANDO EN FACEBOOK...'):
+                with st.spinner('🔵 PROCESANDO FACEBOOK...'):
                     nombre_fb = "fb_video.mp4"
-                    ydl_opts = {'outtmpl': nombre_fb, 'format': 'best[ext=mp4]', 'noplaylist': True}
+                    
+                    # Lógica de calidad
+                    if "Normal" in fb_calidad:
+                        # Calidad estándar (SD)
+                        ydl_opts = {
+                            'outtmpl': nombre_fb, 
+                            'format': 'best[height<=720][ext=mp4]/best[ext=mp4]', 
+                            'noplaylist': True
+                        }
+                    else:
+                        # Calidad Máxima (HD/1080p si existe)
+                        ydl_opts = {
+                            'outtmpl': nombre_fb, 
+                            'format': 'bestvideo+bestaudio/best', 
+                            'merge_output_format': 'mp4',
+                            'noplaylist': True
+                        }
                     
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(fb_link, download=True)
@@ -255,11 +298,10 @@ with tab3:
                     shutil.move(nombre_fb, final_name)
 
                     with open(final_name, "rb") as f:
-                        st.success("✅ FACEBOOK LISTO")
+                        st.success(f"✅ FACEBOOK ({fb_calidad}) LISTO")
                         st.download_button("💾 GUARDAR VIDEO FB", f, file_name=final_name, mime="video/mp4")
             except Exception as e:
                 st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
 
 # Footer
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.1 | BY SANDREKE</p></center>", unsafe_allow_html=True)
-
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.4 | BY SANDREKE</p></center>", unsafe_allow_html=True)
