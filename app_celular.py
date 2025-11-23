@@ -8,10 +8,10 @@ import shutil
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="DDL Station", page_icon="🛸", layout="centered")
 
-# --- DISEÑO AZUL PETRÓLEO (CSS) ---
+# --- DISEÑO (CSS) ---
 st.markdown("""
     <style>
-    /* 1. FONDO AZUL PETRÓLEO (Original) */
+    /* 1. FONDO AZUL PETRÓLEO */
     .stApp {
         background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
         color: white;
@@ -23,7 +23,7 @@ st.markdown("""
         text-align: center;
         font-family: 'Courier New', monospace;
         text-shadow: 0 0 10px #00d2ff; 
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
     
     /* Subtítulo */
@@ -31,10 +31,24 @@ st.markdown("""
         text-align: center;
         color: #b0c4de;
         font-size: 14px;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
     }
 
-    /* 3. INPUTS (Letras Blancas y Brillantes) */
+    /* 3. CAJA DE ADVERTENCIA (NUEVA) */
+    .warning-box {
+        background-color: rgba(255, 165, 0, 0.1); /* Naranja transparente */
+        border: 1px solid #ffa500;
+        color: #ffa500;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 25px;
+        letter-spacing: 1px;
+    }
+
+    /* 4. INPUTS */
     .stTextInput > label {
         color: white !important;
         font-size: 16px !important;
@@ -46,7 +60,7 @@ st.markdown("""
         border: 1px solid #00d2ff;
     }
 
-    /* 4. BOTONES (Estilo Neon) */
+    /* 5. BOTONES */
     .stButton>button {
         width: 100%;
         background: rgba(0, 0, 0, 0.5);
@@ -65,7 +79,7 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
     }
 
-    /* 5. RADIO BUTTONS (Visibilidad Alta) */
+    /* 6. RADIO BUTTONS */
     div[role="radiogroup"] p {
         color: #00ffff !important;
         font-size: 18px !important;
@@ -83,7 +97,7 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    /* 6. PESTAÑAS */
+    /* 7. PESTAÑAS */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: rgba(0,0,0,0.3);
@@ -100,7 +114,14 @@ st.markdown("""
 
 # --- CABECERA ---
 st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>YOUTUBE • TIKTOK • FACEBOOK</p>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'> Ready for DownloadK</p>", unsafe_allow_html=True)
+
+# --- ADVERTENCIA VISUAL ---
+st.markdown("""
+    <div class='warning-box'>
+        ⚠️ LÍMITE : MÁXIMO 20 MINUTOS POR VIDEO
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- VERIFICACIÓN FFMPEG ---
 ffmpeg_existe = False
@@ -110,7 +131,7 @@ try:
 except:
     if os.path.exists("ffmpeg.exe"): ffmpeg_existe = True
 
-# --- PESTAÑAS (AHORA SON 3) ---
+# --- PESTAÑAS ---
 tab1, tab2, tab3 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK", "📘 FACEBOOK"])
 
 # ==========================================
@@ -135,6 +156,11 @@ with tab1:
             try:
                 with st.spinner('⏳ PROCESANDO YOUTUBE...'):
                     yt = YouTube(yt_link)
+                    
+                    # Verificación rápida de duración (aprox)
+                    if yt.length > 1800: # 1800 segundos = 30 min
+                        st.warning("⚠️ El video es muy largo (>30min). Podría fallar en este servidor.")
+                    
                     nombre_base = "".join(c for c in yt.title if c.isalnum() or c in (' ', '-', '_')).strip()
                     final_path = ""
                     mime_type = ""
@@ -205,7 +231,7 @@ with tab2:
                 st.error(f"❌ ERROR: {e}")
 
 # ==========================================
-# PESTAÑA 3: FACEBOOK (NUEVA)
+# PESTAÑA 3: FACEBOOK
 # ==========================================
 with tab3:
     fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...")
@@ -217,7 +243,6 @@ with tab3:
             try:
                 with st.spinner('🔵 BUSCANDO EN FACEBOOK...'):
                     nombre_fb = "fb_video.mp4"
-                    # Configuración específica para Facebook
                     ydl_opts = {'outtmpl': nombre_fb, 'format': 'best[ext=mp4]', 'noplaylist': True}
                     
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -236,6 +261,4 @@ with tab3:
                 st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
 
 # Footer
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.0</p></center>", unsafe_allow_html=True)
-
-
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.1 | BY SANDREKE</p></center>", unsafe_allow_html=True)
