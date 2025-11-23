@@ -7,23 +7,12 @@ import shutil
 
 st.set_page_config(page_title="DDL Station", page_icon="🛸", layout="centered")
 
-if 'yt_url' not in st.session_state: st.session_state.yt_url = ''
-if 'tt_url' not in st.session_state: st.session_state.tt_url = ''
-if 'fb_url' not in st.session_state: st.session_state.fb_url = ''
-
-def clear_yt(): st.session_state.yt_url = ''
-def clear_tt(): st.session_state.tt_url = ''
-def clear_fb(): st.session_state.fb_url = ''
-
 st.markdown("""
     <style>
-    /* 1. FONDO */
     .stApp {
         background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
         color: white;
     }
-    
-    /* 2. TÍTULOS */
     h1 {
         color: #ffffff;
         text-align: center;
@@ -37,8 +26,6 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 20px;
     }
-    
-    /* 3. INPUTS */
     .stTextInput > label {
         color: white !important;
         font-size: 14px !important;
@@ -51,8 +38,6 @@ st.markdown("""
         border: 1px solid #00d2ff;
         border-radius: 8px;
     }
-
-    /* 4. BOTONES GRANDES (Descargar) */
     .stButton > button {
         width: 100%;
         background: rgba(0, 0, 0, 0.5);
@@ -70,37 +55,6 @@ st.markdown("""
         color: #0f2027;
         box-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
     }
-
-    /* 5. ARREGLO DEL BOTÓN BASURA 🗑️ */
-    /* Apuntamos a los botones de la columna pequeña */
-    [data-testid="column"]:nth-of-type(2) [data-testid="baseButton-secondary"] {
-        background-color: transparent !important; /* Quita fondo blanco */
-        border: 1px solid #ff4444 !important;
-        color: #ff4444 !important;
-        border-radius: 8px;
-        height: 48px;         /* Altura exacta del input */
-        width: 100%;
-        margin-top: 0px !important; /* Quitamos márgenes extraños */
-        transform: translateY(28px); /* Lo bajamos forzosamente para alinear */
-    }
-    [data-testid="column"]:nth-of-type(2) [data-testid="baseButton-secondary"]:hover {
-        background-color: rgba(255, 68, 68, 0.2) !important;
-        color: white !important;
-        border-color: #ff4444 !important;
-    }
-
-    /* 6. ESTILO TEXTO "BORRAR" DEBAJO */
-    .label-borrar-abajo {
-        color: #ff4444;
-        font-size: 10px;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 35px; /* Espacio para que quede debajo del botón */
-        display: block;
-        opacity: 0.8;
-    }
-
-    /* 7. OTROS */
     div[role="radiogroup"] p {
         color: #00ffff !important;
         font-weight: bold !important;
@@ -160,14 +114,7 @@ def unir_ffmpeg(v, a, out):
 # YOUTUBE
 # ==========================================
 with tab1:
-    col1, col2 = st.columns([8, 1.5])
-    with col1:
-        yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...", key="yt_url")
-    with col2:
-        # Botón y luego texto
-        st.button("🗑️", on_click=clear_yt, help="Limpiar campo")
-        st.markdown("<span class='label-borrar-abajo'>BORRAR</span>", unsafe_allow_html=True)
-
+    yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...")
     st.write(" ")
     yt_tipo = st.radio("SELECCIONA CALIDAD (YT):", 
                        ["⚡ Video Rápido (720p)", "💎 Video Ultra (1080p)", "🎧 Solo Audio (MP3)"])
@@ -225,13 +172,7 @@ with tab1:
 # TIKTOK
 # ==========================================
 with tab2:
-    col1, col2 = st.columns([8, 1.5])
-    with col1:
-        tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...", key="tt_url")
-    with col2:
-        st.button("🗑️", on_click=clear_tt, help="Limpiar campo", key="btn_clear_tt")
-        st.markdown("<span class='label-borrar-abajo'>BORRAR</span>", unsafe_allow_html=True)
-
+    tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...")
     st.write(" ")
     tt_calidad = st.radio("SELECCIONA CALIDAD (TT):", ["⚡ Descarga Normal", "💎 Alta Definición"])
     st.write(" ")
@@ -267,13 +208,7 @@ with tab2:
 # FACEBOOK
 # ==========================================
 with tab3:
-    col1, col2 = st.columns([8, 1.5])
-    with col1:
-        fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...", key="fb_url")
-    with col2:
-        st.button("🗑️", on_click=clear_fb, help="Limpiar campo", key="btn_clear_fb")
-        st.markdown("<span class='label-borrar-abajo'>BORRAR</span>", unsafe_allow_html=True)
-
+    fb_link = st.text_input("PEGAR ENLACE FACEBOOK:", placeholder="https://www.facebook.com/watch/...")
     st.write(" ")
     fb_calidad = st.radio("SELECCIONA CALIDAD (FB):", ["⚡ Descarga Normal", "💎 Alta Definición"])
     st.write(" ")
@@ -306,5 +241,6 @@ with tab3:
                 st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
 
 st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v7.0 </p></center>", unsafe_allow_html=True)
+
 
 
