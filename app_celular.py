@@ -236,5 +236,6 @@ with tab3:
                 st.error(f"❌ ERROR (Verifica que el video sea público): {e}")
 
 # Footer
-st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.0 | BY SANDREKE</p></center>", unsafe_allow_html=True)
+st.markdown("<br><br><center><p style='color: #ccc; font-size: 12px; letter-spacing: 2px;'>DDL STATION v6.0</p></center>", unsafe_allow_html=True)
+
 
