@@ -6,87 +6,110 @@ import subprocess
 import shutil
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Sandreke Station", page_icon="🚀", layout="centered")
+st.set_page_config(page_title="DDL Station", page_icon="🛸", layout="centered")
 
-# --- DISEÑO PERSONALIZADO (CSS) ---
-# Aquí sucede la magia visual
+# --- DISEÑO NEÓN DARK (CSS) ---
 st.markdown("""
     <style>
-    /* 1. Fondo de la aplicación (Degradado oscuro) */
+    /* 1. FONDO DEEP BLACK (Negro Profundo) */
     .stApp {
-        background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+        background-color: #000000;
+        background-image: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
         color: white;
     }
 
-    /* 2. Títulos y Encabezados */
+    /* 2. TÍTULO PRINCIPAL */
     h1 {
-        color: #00d2ff; /* Azul neón */
+        color: #ffffff;
         text-align: center;
-        font-family: 'Helvetica Neue', sans-serif;
-        text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 0 10px #00d2ff, 0 0 20px #00d2ff; /* Efecto Neón Azul */
+        margin-bottom: 10px;
     }
-    h3 {
-        color: #e0e0e0;
-        border-bottom: 2px solid #00d2ff;
-        padding-bottom: 10px;
+    
+    /* Subtítulo */
+    .subtitle {
+        text-align: center;
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 30px;
     }
 
-    /* 3. Personalización de los botones (Rojos para acción) */
+    /* 3. BOTONES DE ACCIÓN (Estilo Cyberpunk) */
     .stButton>button {
         width: 100%;
-        background: linear-gradient(45deg, #FF416C, #FF4B2B);
-        color: white;
+        background: black;
+        color: #00d2ff;
+        border: 2px solid #00d2ff; /* Borde Neón */
         font-weight: bold;
-        border: none;
-        border-radius: 25px;
+        border-radius: 10px;
         height: 50px;
-        box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 20px rgba(255, 75, 43, 0.6);
+        background: #00d2ff;
+        color: black;
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
     }
 
-    /* 4. Cajas de texto (Inputs) */
+    /* 4. INPUTS (Cajas de texto) */
     .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: white;
-        border: 1px solid #00d2ff;
-        border-radius: 10px;
+        background-color: #111;
+        color: #00d2ff;
+        border: 1px solid #333;
+        border-radius: 5px;
+    }
+    .stTextInput>div>div>input:focus {
+        border-color: #00d2ff;
+        box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+    }
+
+    /* 5. SOLUCIÓN AL TEXTO INVISIBLE (Radio Buttons) */
+    /* Esto hace que las opciones (720p, 1080p) brillen */
+    div[role="radiogroup"] p {
+        color: #00ffff !important; /* Cian brillante */
+        font-size: 18px !important;
+        font-weight: bold !important;
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.5); /* Resplandor */
+        background-color: rgba(0,0,0,0.5); /* Fondo semitransparente para leer mejor */
+        padding: 5px 10px;
+        border-radius: 5px;
+        border-left: 3px solid #00ffff;
+        margin-bottom: 8px;
     }
     
-    /* 5. Pestañas (Tabs) */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 20px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: rgba(255,255,255,0.05);
-        border-radius: 10px;
-        color: white;
+    /* El título de "Elige la calidad" */
+    .stRadio > label {
+        color: #ffffff !important;
+        font-size: 20px !important;
         font-weight: bold;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: rgba(0, 210, 255, 0.2) !important;
-        border: 1px solid #00d2ff;
-        color: #00d2ff !important;
+        margin-bottom: 10px;
+        text-decoration: underline decoration-cyan;
     }
 
-    /* 6. Radio Buttons (Bolitas de selección) */
-    .stRadio > label {
-        color: white !important;
+    /* 6. PESTAÑAS */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: #111;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #00d2ff !important;
+        color: black !important;
         font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- TÍTULO CON EMOJIS ---
-st.markdown("<h1>🚀 Sandreke Station 🛸</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #b0c4de;'>Tu centro de descargas universal</p>", unsafe_allow_html=True)
+# --- ESTRUCTURA VISUAL ---
+st.markdown("<h1>🚀 DDL Station 🛸</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>SYSTEM ONLINE • READY FOR DOWNLOAD</p>", unsafe_allow_html=True)
 
-# --- VERIFICACIÓN FFMPEG (Silenciosa) ---
+# --- VERIFICACIÓN FFMPEG ---
 ffmpeg_existe = False
 try:
     subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -95,20 +118,21 @@ except:
     if os.path.exists("ffmpeg.exe"): ffmpeg_existe = True
 
 # --- PESTAÑAS ---
-tab1, tab2 = st.tabs(["🟥 YouTube", "🎵 TikTok"])
+tab1, tab2 = st.tabs(["🟥 YOUTUBE", "🎵 TIKTOK"])
 
 # ==========================================
 # PESTAÑA 1: YOUTUBE
 # ==========================================
 with tab1:
-    st.markdown("### 📺 Descargar de YouTube")
-    yt_link = st.text_input("🔗 Pega el enlace aquí:", placeholder="https://youtube.com/...")
+    yt_link = st.text_input("PEGAR ENLACE YOUTUBE:", placeholder="https://...")
     
-    st.write(" ") # Espacio
-    yt_tipo = st.radio("✨ Elige la calidad:", 
-                       ["⚡ Video Rápido (720p)", "🌟 Video Ultra (1080p)", "🎧 Solo Audio (MP3)"])
+    st.write(" ")
     
-    st.write(" ") # Espacio
+    # Radio buttons con el nuevo estilo neón
+    yt_tipo = st.radio("SELECCIONA CALIDAD:", 
+                       ["⚡ Video Rápido (720p)", "💎 Video Ultra (1080p)", "🎧 Solo Audio (MP3)"])
+    
+    st.write(" ")
 
     # Función auxiliar
     def unir_ffmpeg(v, a, out):
@@ -116,12 +140,12 @@ with tab1:
         cmd = f'{cmd_base} -i "{v}" -i "{a}" -c:v copy -c:a aac "{out}" -y'
         subprocess.run(cmd, shell=True)
 
-    if st.button("🚀 DESCARGAR YOUTUBE"):
+    if st.button("INICIAR DESCARGA"):
         if not yt_link:
-            st.warning("⚠️ ¡Oye! Te olvidaste del link.")
+            st.warning("⚠️ ERROR: ENLACE NO DETECTADO")
         else:
             try:
-                with st.spinner('🤖 Procesando en la nube...'):
+                with st.spinner('⏳ PROCESANDO DATOS...'):
                     yt = YouTube(yt_link)
                     nombre_base = "".join(c for c in yt.title if c.isalnum() or c in (' ', '-', '_')).strip()
                     final_path = ""
@@ -145,7 +169,7 @@ with tab1:
                             if os.path.exists("temp_a.m4a"): os.remove("temp_a.m4a")
                             mime_type = "video/mp4"
                         else:
-                            st.warning("⚠️ No hay 1080p disponible, bajando 720p.")
+                            st.warning("⚠️ 1080p NO DISPONIBLE. DESCARGANDO 720p.")
                             stream = yt.streams.get_highest_resolution()
                             final_path = f"{nombre_base}_720p.mp4"
                             stream.download(filename=final_path)
@@ -160,27 +184,26 @@ with tab1:
                         mime_type = "audio/mpeg"
 
                     with open(final_path, "rb") as f:
-                        st.success("¡Listo! Tu archivo está caliente 🔥")
+                        st.success("✅ DESCARGA COMPLETADA")
                         st.download_button(f"💾 GUARDAR ARCHIVO", f, file_name=final_path, mime=mime_type)
                         
             except Exception as e:
-                st.error(f"Ups, algo falló: {e}")
+                st.error(f"❌ ERROR DEL SISTEMA: {e}")
 
 # ==========================================
 # PESTAÑA 2: TIKTOK
 # ==========================================
 with tab2:
-    st.markdown("### 🎵 Descargar de TikTok")
-    tt_link = st.text_input("🔗 Pega el enlace de TikTok:", placeholder="https://vm.tiktok.com/...")
+    tt_link = st.text_input("PEGAR ENLACE TIKTOK:", placeholder="https://vm.tiktok.com/...")
     
     st.write(" ")
     
-    if st.button("🌪️ DESCARGAR TIKTOK"):
+    if st.button("OBTENER VIDEO"):
         if not tt_link:
-            st.warning("⚠️ Necesito un link para trabajar.")
+            st.warning("⚠️ ERROR: ENLACE REQUERIDO")
         else:
             try:
-                with st.spinner('🕵️ Quitándole la marca de agua...'):
+                with st.spinner('🔄 ELIMINANDO MARCA DE AGUA...'):
                     nombre_tt = "tiktok_video.mp4"
                     ydl_opts = {'outtmpl': nombre_tt, 'format': 'best[ext=mp4]', 'noplaylist': True}
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -193,11 +216,10 @@ with tab2:
                     shutil.move(nombre_tt, final_name)
 
                     with open(final_name, "rb") as f:
-                        st.success("¡TikTok limpio y listo! ✨")
-                        st.download_button("💾 GUARDAR TIKTOK", f, file_name=final_name, mime="video/mp4")
+                        st.success("✅ VIDEO LISTO")
+                        st.download_button("💾 GUARDAR EN GALERÍA", f, file_name=final_name, mime="video/mp4")
                         
             except Exception as e:
-                st.error(f"Error en TikTok: {e}")
+                st.error(f"❌ ERROR: {e}")
 
-# Footer discreto
-st.markdown("<br><hr><center><p style='color: #555;'>Creado por Sandreke | Powered by Python</p></center>", unsafe_allow_html=True)
+st.markdown("<br><center><p style='color: #333; font-size: 10px;'>DDL STATION v5.0</p></center>", unsafe_allow_html=True)
